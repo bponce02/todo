@@ -2,6 +2,13 @@
 default:
     @just --list
 
+# first-time setup: install deps, migrate, create admin/admin superuser
+init:
+    uv sync
+    just npm-install
+    just migrate
+    uv run python src/manage.py shell -c "from django.contrib.auth import get_user_model; U = get_user_model(); U.objects.filter(username='admin').exists() or U.objects.create_superuser('admin', 'admin@example.com', 'admin')"
+
 # run Django + Radicale together (main dev command)
 [parallel]
 dev: runserver radicale npm-dev
@@ -21,6 +28,10 @@ radicale-adduser:
 # run the test suite (pass extra args, e.g. `just test -k auth`)
 test *ARGS:
     uv run pytest {{ARGS}}
+
+# run Django's system checks
+check:
+    uv run python src/manage.py check
 
 migrate:
     uv run python src/manage.py migrate
