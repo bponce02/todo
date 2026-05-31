@@ -27,12 +27,37 @@ RADICALE_PASSWORD = os.environ.get("RADICALE_PASSWORD")
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-e))d&ir7y&z1xby8x-yt-h*ui_ag#n-@iue=$j_b@kcuq$z@0r"
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-e))d&ir7y&z1xby8x-yt-h*ui_ag#n-@iue=$j_b@kcuq$z@0r",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() in ("1", "true", "yes")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    h.strip() for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if h.strip()
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    o.strip()
+    for o in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
+    if o.strip()
+]
+
+# When the app sits behind a TLS-terminating proxy (Cloudflare Tunnel, Caddy,
+# Traefik, etc.) the request hits Django as plain HTTP, but the proxy sets
+# X-Forwarded-Proto: https. Enabling this makes request.is_secure() return True
+# so CSRF, secure cookies, and same-origin checks behave correctly.
+#
+# SECURITY: only enable this when the app is unreachable except through the
+# proxy. The compose example binds to 127.0.0.1 for exactly this reason —
+# otherwise an attacker can spoof X-Forwarded-Proto and bypass HTTPS checks.
+if os.environ.get("DJANGO_TRUST_PROXY_HTTPS", "False").lower() in ("1", "true", "yes"):
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    USE_X_FORWARDED_HOST = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 
 # Application definition
@@ -52,6 +77,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -86,7 +112,7 @@ WSGI_APPLICATION = "personal_management.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": os.environ.get("SQLITE_PATH", str(BASE_DIR / "db.sqlite3")),
     }
 }
 
@@ -135,6 +161,14 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 FRONTEND_DIST = BASE_DIR.parent / "frontend" / "dist"
 
 STATICFILES_DIRS = [FRONTEND_DIST]
+
+# Whitenoise compresses static files but does NOT re-hash them — Vite already
+# produces content-hashed filenames and django-vite's manifest lookups would
+# break if whitenoise added a second hash on top.
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+}
 
 # django-vite: in dev_mode the template tags point at the Vite dev server
 # (HMR + ESM via http://localhost:3000). In prod they read the manifest written

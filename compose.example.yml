@@ -1,0 +1,47 @@
+# Example docker-compose for deploying the GHCR image behind Cloudflare Tunnel.
+# Copy to `compose.yml` (gitignored) and fill in real secrets/hosts.
+#
+#   docker compose up -d
+#   docker compose logs -f
+#   docker compose pull && docker compose up -d   # rolling update
+#
+# Topology:
+#   browser --https--> Cloudflare --tunnel--> cloudflared --http--> app:8000
+#
+# Cloudflare terminates TLS at its edge and the tunnel delivers plain HTTP to
+# the app, with X-Forwarded-Proto: https set so Django can tell the original
+# request was HTTPS. Binding to 127.0.0.1 (not 0.0.0.0) is important:
+# DJANGO_TRUST_PROXY_HTTPS only stays safe while the app is reachable solely
+# through the tunnel — otherwise anyone could spoof X-Forwarded-Proto.
+
+services:
+  app:
+    image: ghcr.io/OWNER/REPO:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      # REQUIRED. Generate with: python -c "import secrets; print(secrets.token_urlsafe(50))"
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY in .env}
+      # Comma-separated hostnames the app will answer to.
+      DJANGO_ALLOWED_HOSTS: todo.example.com
+      # Required for the Django admin's CSRF check when posted from HTTPS.
+      DJANGO_CSRF_TRUSTED_ORIGINS: https://todo.example.com
+      # Trust X-Forwarded-Proto/Host from the tunnel so request.is_secure() is
+      # True and Secure cookies actually get sent. See settings.py for details.
+      DJANGO_TRUST_PROXY_HTTPS: "True"
+      # Defaults shown for reference — uncomment to override.
+      # DJANGO_DEBUG: "False"
+      # SQLITE_PATH: /data/db.sqlite3
+      # GUNICORN_WORKERS: "3"
+    volumes:
+      - app-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/', timeout=5)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  app-data:
