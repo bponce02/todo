@@ -12,7 +12,9 @@ const DAY = 60 * 60 * 24
 function readCookie(name: string): string | null {
   if (!ok) return null
   const escaped = name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1')
-  const match = document.cookie.match(new RegExp('(?:^|; )' + escaped + '=([^;]*)'))
+  const match = document.cookie.match(
+    new RegExp('(?:^|; )' + escaped + '=([^;]*)'),
+  )
   return match ? decodeURIComponent(match[1]) : null
 }
 
@@ -20,7 +22,8 @@ function writeCookie(name: string, value: string, maxAge: number): void {
   if (!ok) return
   const secure = location.protocol === 'https:' ? '; Secure' : ''
   document.cookie =
-    `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAge}; SameSite=Strict` + secure
+    `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAge}; SameSite=Strict` +
+    secure
 }
 
 function deleteCookie(name: string): void {

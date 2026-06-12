@@ -26,12 +26,12 @@ export interface TaskInput {
 
 export type TaskPatch = Partial<TaskInput>
 
-async function jsonOrThrow<T>(res: Response): Promise<T> {
+export async function jsonOrThrow<T>(res: Response): Promise<T> {
   if (!res.ok) throw await toError(res)
   return res.json() as Promise<T>
 }
 
-async function okOrThrow(res: Response): Promise<void> {
+export async function okOrThrow(res: Response): Promise<void> {
   if (!res.ok) throw await toError(res)
 }
 
@@ -48,14 +48,16 @@ async function toError(res: Response): Promise<ApiError> {
 
 export const listsApi = {
   list: () => apiFetch('/api/lists').then((r) => jsonOrThrow<Array<List>>(r)),
-  create: (title: string) =>
-    apiFetch('/api/lists', { method: 'POST', body: JSON.stringify({ title }) }).then((r) =>
-      jsonOrThrow<List>(r),
-    ),
+  create: (title: string, view?: 'list' | 'calendar') =>
+    apiFetch('/api/lists', {
+      method: 'POST',
+      body: JSON.stringify({ title, ...(view && { view }) }),
+    }).then((r) => jsonOrThrow<List>(r)),
   update: (id: number, patch: { title?: string }) =>
-    apiFetch(`/api/lists/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }).then((r) =>
-      jsonOrThrow<List>(r),
-    ),
+    apiFetch(`/api/lists/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(patch),
+    }).then((r) => jsonOrThrow<List>(r)),
   remove: (id: number) =>
     apiFetch(`/api/lists/${id}`, { method: 'DELETE' }).then(okOrThrow),
 }
@@ -66,17 +68,22 @@ export const tasksApi = {
     if (params?.listId != null) q.set('list_id', String(params.listId))
     if (params?.completed != null) q.set('completed', String(params.completed))
     const qs = q.toString()
-    return apiFetch(`/api/tasks${qs ? `?${qs}` : ''}`).then((r) => jsonOrThrow<Array<Task>>(r))
+    return apiFetch(`/api/tasks${qs ? `?${qs}` : ''}`).then((r) =>
+      jsonOrThrow<Array<Task>>(r),
+    )
   },
-  get: (id: number) => apiFetch(`/api/tasks/${id}`).then((r) => jsonOrThrow<Task>(r)),
+  get: (id: number) =>
+    apiFetch(`/api/tasks/${id}`).then((r) => jsonOrThrow<Task>(r)),
   create: (input: TaskInput) =>
-    apiFetch('/api/tasks', { method: 'POST', body: JSON.stringify(input) }).then((r) =>
-      jsonOrThrow<Task>(r),
-    ),
+    apiFetch('/api/tasks', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }).then((r) => jsonOrThrow<Task>(r)),
   update: (id: number, patch: TaskPatch) =>
-    apiFetch(`/api/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }).then((r) =>
-      jsonOrThrow<Task>(r),
-    ),
+    apiFetch(`/api/tasks/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(patch),
+    }).then((r) => jsonOrThrow<Task>(r)),
   remove: (id: number) =>
     apiFetch(`/api/tasks/${id}`, { method: 'DELETE' }).then(okOrThrow),
 }

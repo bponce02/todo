@@ -15,7 +15,8 @@ export function useLogin() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ username, password }: Credentials) => obtainTokenPair(username, password),
+    mutationFn: ({ username, password }: Credentials) =>
+      obtainTokenPair(username, password),
     onSuccess: (data) => {
       auth.setTokens(data.access, data.refresh, data.username)
       queryClient.clear()

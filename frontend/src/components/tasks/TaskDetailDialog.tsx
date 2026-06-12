@@ -1,6 +1,15 @@
 import { useState } from 'react'
-import { Button, Chip, Modal, Typography, toast } from '@heroui/react'
+import { toast } from 'sonner'
 import { Pencil, Trash2 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useDeleteTask } from '../../lib/queries'
 import type { Task } from '../../lib/tasks-api'
 import { ConfirmDialog } from '../common/ConfirmDialog'
@@ -10,15 +19,23 @@ function formatDate(iso: string): string {
   const d = new Date(`${iso}T00:00:00`)
   return Number.isNaN(d.getTime())
     ? iso
-    : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+    : d.toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      })
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
   return (
     <div className="flex flex-col gap-1">
-      <Typography type="body-xs" color="muted">
-        {label}
-      </Typography>
+      <p className="text-xs text-muted-foreground">{label}</p>
       {children}
     </div>
   )
@@ -50,62 +67,61 @@ export function TaskDetailDialog({
       setConfirmOpen(false)
       onDeleted()
     } catch (err) {
-      toast.danger(err instanceof Error ? err.message : 'Could not delete the task.')
+      toast.error(
+        err instanceof Error ? err.message : 'Could not delete the task.',
+      )
     }
   }
 
   return (
     <>
-      <Modal>
-        <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
-          <Modal.Container>
-            <Modal.Dialog>
-              <Modal.CloseTrigger />
-              <Modal.Header>
-                <Modal.Heading>{task?.title}</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body>
-                {task && (
-                  <div className="flex flex-col gap-4">
-                    {task.description && (
-                      <Field label="Description">
-                        <Typography>{task.description}</Typography>
-                      </Field>
-                    )}
-                    <Field label="Due date">
-                      <Typography color={task.due_date ? 'default' : 'muted'}>
-                        {task.due_date ? formatDate(task.due_date) : 'No due date'}
-                      </Typography>
-                    </Field>
-                    <Field label="List">
-                      <div>
-                        <Chip size="sm">{listName ?? 'Unknown'}</Chip>
-                      </div>
-                    </Field>
-                    <Field label="Status">
-                      <div>
-                        <Chip size="sm" color={task.completed ? 'success' : 'default'}>
-                          {task.completed ? 'Completed' : 'Active'}
-                        </Chip>
-                      </div>
-                    </Field>
-                  </div>
-                )}
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="secondary" onPress={() => task && onEdit(task)}>
-                  <Pencil />
-                  Edit
-                </Button>
-                <Button variant="danger" onPress={() => setConfirmOpen(true)}>
-                  <Trash2 />
-                  Delete
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{task?.title}</DialogTitle>
+          </DialogHeader>
+          {task && (
+            <div className="flex flex-col gap-4">
+              {task.description && (
+                <Field label="Description">
+                  <p>{task.description}</p>
+                </Field>
+              )}
+              <Field label="Due date">
+                <p
+                  className={
+                    task.due_date ? undefined : 'text-muted-foreground'
+                  }
+                >
+                  {task.due_date ? formatDate(task.due_date) : 'No due date'}
+                </p>
+              </Field>
+              <Field label="List">
+                <div>
+                  <Badge variant="secondary">{listName ?? 'Unknown'}</Badge>
+                </div>
+              </Field>
+              <Field label="Status">
+                <div>
+                  <Badge variant={task.completed ? 'default' : 'secondary'}>
+                    {task.completed ? 'Completed' : 'Active'}
+                  </Badge>
+                </div>
+              </Field>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => task && onEdit(task)}>
+              <Pencil />
+              Edit
+            </Button>
+            <Button variant="destructive" onClick={() => setConfirmOpen(true)}>
+              <Trash2 />
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         isOpen={confirmOpen}

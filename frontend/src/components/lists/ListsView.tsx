@@ -1,17 +1,26 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import {
-  Alert,
-  Button,
-  Label,
-  ListBox,
-  SearchField,
+  AlertCircle,
+  ArrowUpDown,
+  ListChecks,
+  Search,
+  Trash2,
+  X,
+} from 'lucide-react'
+import { toast } from 'sonner'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
   Select,
-  Spinner,
-  Typography,
-  toast,
-} from '@heroui/react'
-import { ArrowUpDown, ListChecks, Trash2, X } from 'lucide-react'
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Spinner } from '@/components/ui/spinner'
 import { useBulkDeleteLists, useLists, useTasks } from '../../lib/queries'
 import type { List } from '../../lib/tasks-api'
 import { Fab } from '../common/Fab'
@@ -26,16 +35,10 @@ type SortKey = 'name' | 'count'
 // stay in sync.
 function SortOptions() {
   return (
-    <ListBox>
-      <ListBox.Item id="name" textValue="Name">
-        Name
-        <ListBox.ItemIndicator />
-      </ListBox.Item>
-      <ListBox.Item id="count" textValue="Task count">
-        Task count
-        <ListBox.ItemIndicator />
-      </ListBox.Item>
-    </ListBox>
+    <SelectContent>
+      <SelectItem value="name">Name</SelectItem>
+      <SelectItem value="count">Task count</SelectItem>
+    </SelectContent>
   )
 }
 
@@ -47,7 +50,8 @@ export function ListsView() {
 
   const counts = useMemo(() => {
     const m = new Map<number, number>()
-    for (const t of tasksQuery.data ?? []) m.set(t.list_id, (m.get(t.list_id) ?? 0) + 1)
+    for (const t of tasksQuery.data ?? [])
+      m.set(t.list_id, (m.get(t.list_id) ?? 0) + 1)
     return m
   }, [tasksQuery.data])
 
@@ -98,7 +102,9 @@ export function ListsView() {
       setBulkDeleteOpen(false)
       exitSelectMode()
     } catch (err) {
-      toast.danger(err instanceof Error ? err.message : 'Could not delete lists.')
+      toast.error(
+        err instanceof Error ? err.message : 'Could not delete lists.',
+      )
     }
   }
 
@@ -106,41 +112,47 @@ export function ListsView() {
     <div className="flex flex-col gap-4 py-4">
       {/* Toolbar: full labeled controls on desktop, icon-only on mobile */}
       <div className="flex items-end gap-2 md:gap-3">
-        <SearchField
-          fullWidth
-          value={search}
-          onChange={setSearch}
-          aria-label="Search lists"
-          className="min-w-0 flex-1"
-        >
-          <Label>Search</Label>
-          <SearchField.Group>
-            <SearchField.SearchIcon />
-            <SearchField.Input className="min-w-0" placeholder="Search lists" />
-            <SearchField.ClearButton />
-          </SearchField.Group>
-        </SearchField>
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <Label htmlFor="search-lists">Search</Label>
+          <div className="relative">
+            <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="search-lists"
+              className="min-w-0 pr-8 pl-8"
+              placeholder="Search lists"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                aria-label="Clear search"
+                className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-4" />
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Desktop controls */}
         <div className="hidden shrink-0 items-end gap-3 md:flex">
-          <Select
-            value={sort}
-            onChange={(key) => setSort((key as SortKey) ?? 'name')}
-            className="w-48"
-          >
+          <div className="flex w-48 flex-col gap-2">
             <Label>Sort by</Label>
-            <Select.Trigger>
-              <Select.Value />
-              <Select.Indicator />
-            </Select.Trigger>
-            <Select.Popover>
+            <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+              <SelectTrigger className="w-full" aria-label="Sort by">
+                <SelectValue />
+              </SelectTrigger>
               <SortOptions />
-            </Select.Popover>
-          </Select>
+            </Select>
+          </div>
 
           <Button
-            variant={selectMode ? 'primary' : 'secondary'}
-            onPress={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+            variant={selectMode ? 'default' : 'secondary'}
+            onClick={() =>
+              selectMode ? exitSelectMode() : setSelectMode(true)
+            }
           >
             <ListChecks />
             {selectMode ? 'Done' : 'Select'}
@@ -149,24 +161,22 @@ export function ListsView() {
 
         {/* Mobile controls: icon-only, aligned with the search bar */}
         <div className="flex shrink-0 items-center gap-2 md:hidden">
-          <Select
-            aria-label="Sort by"
-            variant="secondary"
-            value={sort}
-            onChange={(key) => setSort((key as SortKey) ?? 'name')}
-          >
-            <Select.Trigger className="flex size-10 items-center justify-center rounded-3xl p-0">
+          <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+            <SelectTrigger
+              aria-label="Sort by"
+              className="flex size-10 items-center justify-center rounded-3xl p-0 [&>svg:last-child]:hidden"
+            >
               <ArrowUpDown className="size-5" />
-            </Select.Trigger>
-            <Select.Popover>
-              <SortOptions />
-            </Select.Popover>
+            </SelectTrigger>
+            <SortOptions />
           </Select>
 
           <Button
-            isIconOnly
-            variant={selectMode ? 'primary' : 'secondary'}
-            onPress={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+            size="icon-lg"
+            variant={selectMode ? 'default' : 'secondary'}
+            onClick={() =>
+              selectMode ? exitSelectMode() : setSelectMode(true)
+            }
             aria-label={selectMode ? 'Done selecting' : 'Select lists'}
           >
             <ListChecks />
@@ -176,19 +186,18 @@ export function ListsView() {
 
       {selectMode && (
         <div className="flex flex-wrap items-center gap-3 rounded-xl border p-3">
-          <Typography weight="medium">{selected.size} selected</Typography>
+          <span className="font-medium">{selected.size} selected</span>
           <div className="flex flex-1 flex-wrap justify-end gap-2">
             <Button
               size="sm"
-              variant="danger"
-              isDisabled={selected.size === 0}
-              isPending={bulkDelete.isPending}
-              onPress={() => setBulkDeleteOpen(true)}
+              variant="destructive"
+              disabled={selected.size === 0 || bulkDelete.isPending}
+              onClick={() => setBulkDeleteOpen(true)}
             >
-              <Trash2 />
+              {bulkDelete.isPending ? <Spinner /> : <Trash2 />}
               Delete
             </Button>
-            <Button size="sm" variant="tertiary" onPress={exitSelectMode}>
+            <Button size="sm" variant="ghost" onClick={exitSelectMode}>
               <X />
               Cancel
             </Button>
@@ -198,30 +207,36 @@ export function ListsView() {
 
       {listsQuery.isLoading ? (
         <div className="flex justify-center py-12">
-          <Spinner />
+          <Spinner className="size-6" />
         </div>
       ) : listsQuery.isError ? (
-        <Alert status="danger">
-          <Alert.Indicator />
-          <Alert.Content>
-            <Alert.Title>Could not load lists</Alert.Title>
-            <Alert.Description>
-              {listsQuery.error instanceof Error ? listsQuery.error.message : 'Please try again.'}
-            </Alert.Description>
-          </Alert.Content>
-          <Button size="sm" variant="secondary" onPress={() => listsQuery.refetch()}>
-            Retry
-          </Button>
+        <Alert variant="destructive">
+          <AlertCircle />
+          <AlertTitle>Could not load lists</AlertTitle>
+          <AlertDescription>
+            {listsQuery.error instanceof Error
+              ? listsQuery.error.message
+              : 'Please try again.'}
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => listsQuery.refetch()}
+            >
+              Retry
+            </Button>
+          </AlertDescription>
         </Alert>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center gap-1 py-12">
-          <Typography color="muted">
-            {lists.length === 0 ? 'No lists yet.' : 'No lists match your search.'}
-          </Typography>
+          <p className="text-muted-foreground">
+            {lists.length === 0
+              ? 'No lists yet.'
+              : 'No lists match your search.'}
+          </p>
           {lists.length === 0 && (
-            <Typography type="body-sm" color="muted">
+            <p className="text-sm text-muted-foreground">
               Tap the + button to create one.
-            </Typography>
+            </p>
           )}
         </div>
       ) : (
@@ -235,7 +250,10 @@ export function ListsView() {
               isSelected={selected.has(list.id)}
               onToggleSelect={toggleSelect}
               onOpen={(l) =>
-                navigate({ to: '/lists/$listId', params: { listId: String(l.id) } })
+                navigate({
+                  to: '/lists/$listId',
+                  params: { listId: String(l.id) },
+                })
               }
               onSettings={openSettings}
             />

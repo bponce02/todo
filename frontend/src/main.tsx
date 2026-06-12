@@ -2,7 +2,7 @@ import { StrictMode, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Toast } from '@heroui/react'
+import { Toaster } from '@/components/ui/sonner'
 import { routeTree } from './routeTree.gen'
 import './styles.css'
 
@@ -30,7 +30,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
-      <Toast.Provider placement="top" />
+      <Toaster position="top-center" />
     </QueryClientProvider>
   )
 }

@@ -1,5 +1,10 @@
-import { Button, Card, Checkbox, Chip, Typography } from '@heroui/react'
 import { Check } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Spinner } from '@/components/ui/spinner'
+import { cn } from '@/lib/utils'
 import type { Task } from '../../lib/tasks-api'
 
 export function TaskCard({
@@ -36,50 +41,52 @@ export function TaskCard({
       }}
       className="cursor-pointer"
     >
-      <Card>
+      <Card className="p-4">
         <div className="flex items-center gap-3">
           {selectMode && (
             <div onClick={(e) => e.stopPropagation()}>
               <Checkbox
-                isSelected={isSelected}
-                onChange={() => onToggleSelect(task.id)}
+                checked={isSelected}
+                onCheckedChange={() => onToggleSelect(task.id)}
                 aria-label={`Select ${task.title}`}
-              >
-                <Checkbox.Control>
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-              </Checkbox>
+              />
             </div>
           )}
 
           <div className="flex flex-1 flex-col gap-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
-              <Typography
-                weight="medium"
-                truncate
-                color={task.completed ? 'muted' : 'default'}
+              <span
+                className={cn(
+                  'truncate font-medium',
+                  task.completed && 'text-muted-foreground',
+                )}
               >
                 {task.title}
-              </Typography>
-              {listName && <Chip size="sm" className="shrink-0">{listName}</Chip>}
+              </span>
+              {listName && (
+                <Badge variant="secondary" className="shrink-0">
+                  {listName}
+                </Badge>
+              )}
             </div>
 
-            <Typography color="muted" className="line-clamp-1 min-h-[1lh]">
+            <p className="line-clamp-1 min-h-[1lh] text-muted-foreground">
               {task.description ?? ''}
-            </Typography>
+            </p>
           </div>
 
           {!selectMode && (
             <div onClick={(e) => e.stopPropagation()}>
               <Button
-                isIconOnly
-                size="sm"
-                variant={task.completed ? 'primary' : 'outline'}
-                isPending={isToggling}
-                onPress={() => onToggleComplete(task)}
-                aria-label={task.completed ? 'Mark incomplete' : 'Mark complete'}
+                size="icon-sm"
+                variant={task.completed ? 'default' : 'outline'}
+                disabled={isToggling}
+                onClick={() => onToggleComplete(task)}
+                aria-label={
+                  task.completed ? 'Mark incomplete' : 'Mark complete'
+                }
               >
-                <Check />
+                {isToggling ? <Spinner /> : <Check />}
               </Button>
             </div>
           )}

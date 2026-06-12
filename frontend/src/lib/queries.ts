@@ -1,14 +1,25 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { listsApi, tasksApi } from './tasks-api'
 import type { Task, TaskPatch } from './tasks-api'
+import { eventsApi } from './events-api'
+import type { EventInput, EventPatch } from './events-api'
 
 export const queryKeys = {
   lists: ['lists'] as const,
   tasks: ['tasks'] as const,
   tasksBy: (listId?: number) => ['tasks', listId ?? 'all'] as const,
+  events: ['events'] as const,
+  eventsInRange: (start: string, end: string) =>
+    ['events', start, end] as const,
 }
 
 const DEFAULT_LIST_TITLE = 'My Tasks'
+const DEFAULT_CALENDAR_TITLE = 'My Calendar'
 
 // ---- Queries ----
 
@@ -36,7 +47,8 @@ export function useCreateList() {
 export function useRenameList() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, title }: { id: number; title: string }) => listsApi.update(id, { title }),
+    mutationFn: ({ id, title }: { id: number; title: string }) =>
+      listsApi.update(id, { title }),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.lists }),
   })
 }
@@ -56,7 +68,8 @@ export function useDeleteList() {
 export function useBulkDeleteLists() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (ids: Array<number>) => Promise.all(ids.map((id) => listsApi.remove(id))),
+    mutationFn: (ids: Array<number>) =>
+      Promise.all(ids.map((id) => listsApi.remove(id))),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.lists })
       qc.invalidateQueries({ queryKey: queryKeys.tasks })
@@ -82,7 +95,8 @@ export function useCreateTask() {
       let listId = input.list_id
       if (listId == null) {
         const existing = await listsApi.list()
-        listId = existing[0]?.id ?? (await listsApi.create(DEFAULT_LIST_TITLE)).id
+        listId =
+          existing[0]?.id ?? (await listsApi.create(DEFAULT_LIST_TITLE)).id
       }
       return tasksApi.create({
         title: input.title,
@@ -102,7 +116,8 @@ export function useCreateTask() {
 export function useUpdateTask() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, patch }: { id: number; patch: TaskPatch }) => tasksApi.update(id, patch),
+    mutationFn: ({ id, patch }: { id: number; patch: TaskPatch }) =>
+      tasksApi.update(id, patch),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.tasks }),
   })
 }
@@ -130,11 +145,66 @@ export function useBulkUpdateTasks() {
 export function useBulkDeleteTasks() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (ids: Array<number>) => Promise.all(ids.map((id) => tasksApi.remove(id))),
+    mutationFn: (ids: Array<number>) =>
+      Promise.all(ids.map((id) => tasksApi.remove(id))),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.tasks })
       qc.invalidateQueries({ queryKey: queryKeys.lists })
     },
+  })
+}
+
+// ---- Event queries & mutations ----
+
+export function useEvents(rangeStart: string, rangeEnd: string) {
+  return useQuery({
+    queryKey: queryKeys.eventsInRange(rangeStart, rangeEnd),
+    queryFn: () => eventsApi.list({ start: rangeStart, end: rangeEnd }),
+    // Keep the previous week's events on screen while the next loads.
+    placeholderData: keepPreviousData,
+  })
+}
+
+export interface CreateEventInput extends Omit<EventInput, 'list_id'> {
+  list_id?: number
+}
+
+export function useCreateEvent() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: CreateEventInput) => {
+      // An event must always belong to a list. If none was chosen, prefer an
+      // existing calendar-view list, else create a default calendar.
+      let listId = input.list_id
+      if (listId == null) {
+        const existing = await listsApi.list()
+        listId =
+          existing.find((l) => l.view === 'calendar')?.id ??
+          (await listsApi.create(DEFAULT_CALENDAR_TITLE, 'calendar')).id
+      }
+      return eventsApi.create({ ...input, list_id: listId })
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.events })
+      qc.invalidateQueries({ queryKey: queryKeys.lists })
+    },
+  })
+}
+
+export function useUpdateEvent() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: number; patch: EventPatch }) =>
+      eventsApi.update(id, patch),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.events }),
+  })
+}
+
+export function useDeleteEvent() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => eventsApi.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.events }),
   })
 }
 

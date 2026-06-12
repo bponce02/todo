@@ -1,16 +1,18 @@
 import { useState } from 'react'
 import { createFileRoute, redirect } from '@tanstack/react-router'
+import { Alert, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import {
-  Alert,
-  Button,
   Card,
-  Form,
-  Input,
-  Label,
-  Spinner,
-  TextField,
-} from '@heroui/react'
-import { CheckSquare } from 'lucide-react'
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Spinner } from '@/components/ui/spinner'
+import { AlertCircle, CheckSquare } from 'lucide-react'
 import { auth } from '../lib/auth'
 import { useLogin } from '../lib/auth-hooks'
 
@@ -36,51 +38,47 @@ function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <Card className="w-full max-w-sm">
-        <Card.Header className="items-center">
+        <CardHeader className="flex flex-col items-center gap-2">
           <CheckSquare className="size-6" />
-          <Card.Title>Sign in</Card.Title>
-        </Card.Header>
-        <Form onSubmit={handleSubmit}>
-          <Card.Content className="flex flex-col gap-4">
-            <TextField
-              isRequired
-              value={username}
-              onChange={setUsername}
-              autoComplete="username"
-            >
-              <Label>Username</Label>
-              <Input variant="secondary" />
-            </TextField>
-            <TextField
-              isRequired
-              type="password"
-              value={password}
-              onChange={setPassword}
-              autoComplete="current-password"
-            >
-              <Label>Password</Label>
-              <Input variant="secondary" />
-            </TextField>
+          <CardTitle>Sign in</CardTitle>
+        </CardHeader>
+        <form onSubmit={handleSubmit}>
+          <CardContent className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
             {login.isError && (
-              <Alert status="danger">
-                <Alert.Indicator />
-                <Alert.Content>
-                  <Alert.Title>{login.error.message}</Alert.Title>
-                </Alert.Content>
+              <Alert variant="destructive">
+                <AlertCircle />
+                <AlertTitle>{login.error.message}</AlertTitle>
               </Alert>
             )}
-          </Card.Content>
-          <Card.Footer className="mt-4">
-            <Button type="submit" isPending={login.isPending} fullWidth>
-              {({ isPending }) => (
-                <>
-                  {isPending ? <Spinner color="current" size="sm" /> : null}
-                  Sign in
-                </>
-              )}
+          </CardContent>
+          <CardFooter className="mt-4">
+            <Button type="submit" disabled={login.isPending} className="w-full">
+              {login.isPending ? <Spinner /> : null}
+              Sign in
             </Button>
-          </Card.Footer>
-        </Form>
+          </CardFooter>
+        </form>
       </Card>
     </div>
   )

@@ -1,14 +1,25 @@
-import { Calendar, DateField, DatePicker, Label } from '@heroui/react'
-import { parseDate } from '@internationalized/date'
-import type { DateValue } from '@internationalized/date'
+import { useState } from 'react'
+import { CalendarIcon } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
+import { Label } from '@/components/ui/label'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { cn } from '@/lib/utils'
 
-function toDateValue(value?: string): DateValue | null {
-  if (!value) return null
-  try {
-    return parseDate(value)
-  } catch {
-    return null
-  }
+function toLocalDate(value?: string): Date | undefined {
+  if (!value) return undefined
+  const [y, m, d] = value.split('-').map(Number)
+  if (!y || !m || !d) return undefined
+  return new Date(y, m - 1, d)
+}
+
+function toIsoDate(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
 // Date-only picker bound to an ISO date string (YYYY-MM-DD). The backend's
@@ -22,43 +33,37 @@ export function DueDatePicker({
   onChange: (value: string | undefined) => void
   label?: string
 }) {
+  const [open, setOpen] = useState(false)
+  const selected = toLocalDate(value)
+
   return (
-    <DatePicker
-      value={toDateValue(value)}
-      onChange={(date) => onChange(date ? date.toString() : undefined)}
-    >
+    <div className="flex flex-col gap-2">
       <Label>{label}</Label>
-      <DateField.Group fullWidth>
-        <DateField.Input>{(segment) => <DateField.Segment segment={segment} />}</DateField.Input>
-        <DateField.Suffix>
-          <DatePicker.Trigger>
-            <DatePicker.TriggerIndicator />
-          </DatePicker.Trigger>
-        </DateField.Suffix>
-      </DateField.Group>
-      <DatePicker.Popover>
-        <Calendar aria-label={label}>
-          <Calendar.Header>
-            <Calendar.YearPickerTrigger>
-              <Calendar.YearPickerTriggerHeading />
-              <Calendar.YearPickerTriggerIndicator />
-            </Calendar.YearPickerTrigger>
-            <Calendar.NavButton slot="previous" />
-            <Calendar.NavButton slot="next" />
-          </Calendar.Header>
-          <Calendar.Grid>
-            <Calendar.GridHeader>
-              {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
-            </Calendar.GridHeader>
-            <Calendar.GridBody>{(date) => <Calendar.Cell date={date} />}</Calendar.GridBody>
-          </Calendar.Grid>
-          <Calendar.YearPickerGrid>
-            <Calendar.YearPickerGridBody>
-              {({ year }) => <Calendar.YearPickerCell year={year} />}
-            </Calendar.YearPickerGridBody>
-          </Calendar.YearPickerGrid>
-        </Calendar>
-      </DatePicker.Popover>
-    </DatePicker>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            className={cn(
+              'w-full justify-start text-left font-normal',
+              !selected && 'text-muted-foreground',
+            )}
+          >
+            <CalendarIcon />
+            {selected ? selected.toLocaleDateString() : 'Pick a date'}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={selected}
+            onSelect={(date) => {
+              onChange(date ? toIsoDate(date) : undefined)
+              setOpen(false)
+            }}
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
   )
 }

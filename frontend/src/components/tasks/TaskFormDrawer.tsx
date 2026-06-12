@@ -1,19 +1,23 @@
-import {
-  Button,
-  Description,
-  Drawer,
-  FieldError,
-  Form,
-  Input,
-  Label,
-  ListBox,
-  Select,
-  Spinner,
-  TextArea,
-  TextField,
-  toast,
-} from '@heroui/react'
+import { toast } from 'sonner'
 import { useForm } from '@tanstack/react-form'
+import { Button } from '@/components/ui/button'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Spinner } from '@/components/ui/spinner'
+import { Textarea } from '@/components/ui/textarea'
 import { useCreateTask, useUpdateTask } from '../../lib/queries'
 import { firstError, taskFormSchema } from '../../lib/schemas'
 import type { TaskFormValues } from '../../lib/schemas'
@@ -34,23 +38,18 @@ export function TaskFormDrawer({
   defaultListId?: number
 }) {
   return (
-    <Drawer>
-      <Drawer.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
-        <Drawer.Content placement="bottom">
-          <Drawer.Dialog>
-            <Drawer.Handle />
-            {isOpen && (
-              <TaskFormContents
-                key={task?.id ?? 'new'}
-                task={task}
-                lists={lists}
-                defaultListId={defaultListId}
-                onClose={() => onOpenChange(false)}
-              />
-            )}
-          </Drawer.Dialog>
-        </Drawer.Content>
-      </Drawer.Backdrop>
+    <Drawer open={isOpen} onOpenChange={onOpenChange}>
+      <DrawerContent>
+        {isOpen && (
+          <TaskFormContents
+            key={task?.id ?? 'new'}
+            task={task}
+            lists={lists}
+            defaultListId={defaultListId}
+            onClose={() => onOpenChange(false)}
+          />
+        )}
+      </DrawerContent>
     </Drawer>
   )
 }
@@ -70,13 +69,18 @@ function TaskFormContents({
   const createTask = useCreateTask()
   const updateTask = useUpdateTask()
 
+  // Annotated as TaskFormValues so optional fields stay optional in the form
+  // type (list_id can be undefined when no lists exist yet -- the create hook
+  // auto-creates a default list).
+  const defaults: TaskFormValues = {
+    title: task?.title ?? '',
+    description: task?.description ?? '',
+    due_date: task?.due_date ?? '',
+    list_id: task?.list_id ?? defaultListId ?? lists.at(0)?.id,
+  }
+
   const form = useForm({
-    defaultValues: {
-      title: task?.title ?? '',
-      description: task?.description ?? '',
-      due_date: task?.due_date ?? '',
-      list_id: task?.list_id ?? defaultListId ?? lists[0]?.id,
-    } as TaskFormValues,
+    defaultValues: defaults,
     validators: { onChange: taskFormSchema },
     onSubmit: async ({ value }) => {
       try {
@@ -102,19 +106,20 @@ function TaskFormContents({
         }
         onClose()
       } catch (err) {
-        toast.danger(err instanceof Error ? err.message : 'Could not save the task.')
+        toast.error(
+          err instanceof Error ? err.message : 'Could not save the task.',
+        )
       }
     },
   })
 
   return (
     <>
-      <Drawer.Header>
-        <Drawer.Heading>{isEdit ? 'Edit task' : 'New task'}</Drawer.Heading>
-      </Drawer.Header>
-      <Drawer.Body>
-        <Form
-          validationBehavior="aria"
+      <DrawerHeader>
+        <DrawerTitle>{isEdit ? 'Edit task' : 'New task'}</DrawerTitle>
+      </DrawerHeader>
+      <div className="overflow-y-auto px-4 pb-4">
+        <form
           onSubmit={(e) => {
             e.preventDefault()
             form.handleSubmit()
@@ -122,33 +127,41 @@ function TaskFormContents({
           className="flex flex-col gap-4 pb-2"
         >
           <form.Field name="title">
-            {(field) => (
-              <TextField
-                isRequired
-                value={field.state.value}
-                onChange={field.handleChange}
-                onBlur={field.handleBlur}
-                isInvalid={field.state.meta.errors.length > 0}
-              >
-                <Label>Title</Label>
-                <Input placeholder="What needs doing?" />
-                {field.state.meta.errors.length > 0 && (
-                  <FieldError>{firstError(field.state.meta.errors)}</FieldError>
-                )}
-              </TextField>
-            )}
+            {(field) => {
+              const hasErrors = field.state.meta.errors.length > 0
+              return (
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="task-form-title">Title</Label>
+                  <Input
+                    id="task-form-title"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    aria-invalid={hasErrors}
+                    placeholder="What needs doing?"
+                  />
+                  {hasErrors && (
+                    <p className="text-sm text-destructive">
+                      {firstError(field.state.meta.errors)}
+                    </p>
+                  )}
+                </div>
+              )
+            }}
           </form.Field>
 
           <form.Field name="description">
             {(field) => (
-              <TextField
-                value={field.state.value ?? ''}
-                onChange={field.handleChange}
-                onBlur={field.handleBlur}
-              >
-                <Label>Description</Label>
-                <TextArea placeholder="Add more detail (optional)" />
-              </TextField>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="task-form-description">Description</Label>
+                <Textarea
+                  id="task-form-description"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  onBlur={field.handleBlur}
+                  placeholder="Add more detail (optional)"
+                />
+              </div>
             )}
           </form.Field>
 
@@ -163,58 +176,60 @@ function TaskFormContents({
 
           <form.Field name="list_id">
             {(field) => (
-              <Select
-                isRequired
-                placeholder="Select a list"
-                value={field.state.value != null ? String(field.state.value) : null}
-                onChange={(key) =>
-                  field.handleChange(key != null ? Number(key) : undefined)
-                }
-                isInvalid={field.state.meta.errors.length > 0}
-              >
-                <Label>List</Label>
-                <Select.Trigger>
-                  <Select.Value />
-                  <Select.Indicator />
-                </Select.Trigger>
-                {lists.length === 0 && (
-                  <Description>A default list will be created.</Description>
-                )}
-                <Select.Popover>
-                  <ListBox>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="task-form-list">List</Label>
+                <Select
+                  value={
+                    field.state.value != null ? String(field.state.value) : ''
+                  }
+                  onValueChange={(key) =>
+                    field.handleChange(key ? Number(key) : undefined)
+                  }
+                >
+                  <SelectTrigger
+                    id="task-form-list"
+                    className="w-full"
+                    aria-invalid={field.state.meta.errors.length > 0}
+                  >
+                    <SelectValue placeholder="Select a list" />
+                  </SelectTrigger>
+                  <SelectContent>
                     {lists.map((list) => (
-                      <ListBox.Item key={list.id} id={String(list.id)} textValue={list.title}>
+                      <SelectItem key={list.id} value={String(list.id)}>
                         {list.title}
-                        <ListBox.ItemIndicator />
-                      </ListBox.Item>
+                      </SelectItem>
                     ))}
-                  </ListBox>
-                </Select.Popover>
-              </Select>
+                  </SelectContent>
+                </Select>
+                {lists.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    A default list will be created.
+                  </p>
+                )}
+              </div>
             )}
           </form.Field>
 
           <form.Subscribe
-            selector={(s) => ({ canSubmit: s.canSubmit, isSubmitting: s.isSubmitting })}
+            selector={(s) => ({
+              canSubmit: s.canSubmit,
+              isSubmitting: s.isSubmitting,
+            })}
           >
             {({ canSubmit, isSubmitting }) => (
               <div className="flex justify-end gap-2 pt-2">
-                <Button slot="close" type="button" variant="secondary">
+                <Button type="button" variant="secondary" onClick={onClose}>
                   Cancel
                 </Button>
-                <Button type="submit" isDisabled={!canSubmit} isPending={isSubmitting}>
-                  {({ isPending }) => (
-                    <>
-                      {isPending ? <Spinner color="current" size="sm" /> : null}
-                      {isEdit ? 'Save changes' : 'Create task'}
-                    </>
-                  )}
+                <Button type="submit" disabled={!canSubmit || isSubmitting}>
+                  {isSubmitting ? <Spinner /> : null}
+                  {isEdit ? 'Save changes' : 'Create task'}
                 </Button>
               </div>
             )}
           </form.Subscribe>
-        </Form>
-      </Drawer.Body>
+        </form>
+      </div>
     </>
   )
 }

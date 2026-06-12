@@ -1,5 +1,8 @@
-import { Button, Card, Checkbox, Chip, Typography } from '@heroui/react'
 import { Settings } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import type { List } from '../../lib/tasks-api'
 
 export function ListCard({
@@ -22,18 +25,14 @@ export function ListCard({
   const activate = () => (selectMode ? onToggleSelect(list.id) : onOpen(list))
 
   return (
-    <Card>
-      <div className="flex items-center gap-3">
+    <Card className="py-4">
+      <CardContent className="flex items-center gap-3 px-4">
         {selectMode && (
           <Checkbox
-            isSelected={isSelected}
-            onChange={() => onToggleSelect(list.id)}
+            checked={isSelected}
+            onCheckedChange={() => onToggleSelect(list.id)}
             aria-label={`Select ${list.title}`}
-          >
-            <Checkbox.Control>
-              <Checkbox.Indicator />
-            </Checkbox.Control>
-          </Checkbox>
+          />
         )}
 
         <div
@@ -48,22 +47,21 @@ export function ListCard({
           }}
           className="flex flex-1 items-center gap-2 text-left"
         >
-          <Typography weight="medium">{list.title}</Typography>
-          <Chip size="sm">{taskCount}</Chip>
+          <span className="font-medium">{list.title}</span>
+          <Badge variant="secondary">{taskCount}</Badge>
         </div>
 
         {!selectMode && (
           <Button
-            isIconOnly
-            size="sm"
+            size="icon-sm"
             variant="ghost"
-            onPress={() => onSettings(list)}
+            onClick={() => onSettings(list)}
             aria-label={`Settings for ${list.title}`}
           >
             <Settings />
           </Button>
         )}
-      </div>
+      </CardContent>
     </Card>
   )
 }

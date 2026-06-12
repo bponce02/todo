@@ -1,4 +1,14 @@
-import { AlertDialog, Button, Spinner, Typography } from '@heroui/react'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
 
 // Reusable confirmation step shown before a destructive action. The confirm
 // button stays interactive while pending; the caller closes it on success.
@@ -20,34 +30,25 @@ export function ConfirmDialog({
   isPending?: boolean
 }) {
   return (
-    <AlertDialog>
-      <AlertDialog.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
-        <AlertDialog.Container>
-          <AlertDialog.Dialog className="sm:max-w-[400px]">
-            <AlertDialog.CloseTrigger />
-            <AlertDialog.Header>
-              <AlertDialog.Icon status="danger" />
-              <AlertDialog.Heading>{title}</AlertDialog.Heading>
-            </AlertDialog.Header>
-            <AlertDialog.Body>
-              <Typography color="muted">{description}</Typography>
-            </AlertDialog.Body>
-            <AlertDialog.Footer>
-              <Button slot="close" variant="secondary">
-                Cancel
-              </Button>
-              <Button variant="danger" isPending={isPending} onPress={onConfirm}>
-                {({ isPending: pending }) => (
-                  <>
-                    {pending ? <Spinner color="current" size="sm" /> : null}
-                    {confirmLabel}
-                  </>
-                )}
-              </Button>
-            </AlertDialog.Footer>
-          </AlertDialog.Dialog>
-        </AlertDialog.Container>
-      </AlertDialog.Backdrop>
+    <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
+      <AlertDialogContent className="sm:max-w-[400px]">
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          {/* Not AlertDialogAction: it would auto-close; the caller closes on success. */}
+          <Button
+            variant="destructive"
+            disabled={isPending}
+            onClick={onConfirm}
+          >
+            {isPending && <Spinner />}
+            {confirmLabel}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
     </AlertDialog>
   )
 }

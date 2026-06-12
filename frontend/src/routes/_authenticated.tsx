@@ -5,8 +5,10 @@ import {
   useLocation,
   useNavigate,
 } from '@tanstack/react-router'
-import { Button, Separator, Tabs, Typography } from '@heroui/react'
 import { Calendar, CheckSquare, List, ListChecks, Settings } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { auth } from '../lib/auth'
 
 export const Route = createFileRoute('/_authenticated')({
@@ -33,41 +35,36 @@ type TabKey = keyof typeof ROUTES
 function PrimaryTabs() {
   const navigate = useNavigate()
   const pathname = useLocation({ select: (l) => l.pathname })
-  const selected: TabKey | undefined = pathname.startsWith('/lists')
+  const selected: TabKey | '' = pathname.startsWith('/lists')
     ? 'lists'
     : pathname.startsWith('/calendar')
       ? 'calendar'
       : pathname.startsWith('/tasks')
         ? 'tasks'
-        : undefined
+        : ''
 
   return (
     <Tabs
-      selectedKey={selected}
-      onSelectionChange={(key) => navigate({ to: ROUTES[key as TabKey] })}
+      value={selected}
+      onValueChange={(key) => navigate({ to: ROUTES[key as TabKey] })}
     >
-      <Tabs.ListContainer>
-        <Tabs.List
-          aria-label="Primary navigation"
-          className="*:h-8 *:px-4 *:w-fit"
-        >
-          <Tabs.Tab id="tasks">
-            <ListChecks className="size-4 mr-1" />
-            Tasks
-            <Tabs.Indicator />
-          </Tabs.Tab>
-          <Tabs.Tab id="lists">
-            <List className="size-4 mr-1" />
-            Lists
-            <Tabs.Indicator />
-          </Tabs.Tab>
-          <Tabs.Tab id="calendar">
-            <Calendar className="size-4 mr-1" />
-            Calendar
-            <Tabs.Indicator />
-          </Tabs.Tab>
-        </Tabs.List>
-      </Tabs.ListContainer>
+      <TabsList
+        aria-label="Primary navigation"
+        className="bg-background shadow-sm border md:border-0 md:shadow-none md:bg-muted"
+      >
+        <TabsTrigger value="tasks" className="h-8 px-4">
+          <ListChecks className="size-4 mr-1" />
+          Tasks
+        </TabsTrigger>
+        <TabsTrigger value="lists" className="h-8 px-4">
+          <List className="size-4 mr-1" />
+          Lists
+        </TabsTrigger>
+        <TabsTrigger value="calendar" className="h-8 px-4">
+          <Calendar className="size-4 mr-1" />
+          Calendar
+        </TabsTrigger>
+      </TabsList>
     </Tabs>
   )
 }
@@ -81,7 +78,7 @@ function AuthenticatedLayout() {
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr]">
           <div className="flex items-center gap-2">
             <CheckSquare className="size-5" />
-            <Typography weight="semibold">Personal Tasks</Typography>
+            <span className="font-semibold">Personal Tasks</span>
           </div>
 
           <div className="hidden md:block">
@@ -89,7 +86,11 @@ function AuthenticatedLayout() {
           </div>
 
           <div className="flex justify-end">
-            <Button variant="ghost" size="sm" onPress={() => navigate({ to: '/settings' })}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate({ to: '/settings' })}
+            >
               <Settings />
             </Button>
           </div>

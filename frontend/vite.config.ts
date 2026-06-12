@@ -1,9 +1,15 @@
+import path from 'node:path'
 import { defineConfig } from 'vite'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@': path.resolve(import.meta.dirname, 'src'),
+    },
+  },
   // django-vite prepends Django's STATIC_URL (/static/) to asset paths in both
   // dev and prod, so Vite needs to serve at the same prefix in both modes.
   base: '/static/',

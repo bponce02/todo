@@ -1,5 +1,5 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { Button, Typography } from '@heroui/react'
+import { Button } from '@/components/ui/button'
 import { CheckSquare } from 'lucide-react'
 import { auth } from '../lib/auth'
 
@@ -23,15 +23,15 @@ function WelcomePage() {
             <CheckSquare className="size-8" />
           </div>
           <div className="flex flex-col gap-2">
-            <Typography type="h1">Personal Management</Typography>
-            <Typography color="muted" className="max-w-xs">
+            <h1 className="text-3xl font-semibold">Personal Management</h1>
+            <p className="max-w-xs text-muted-foreground">
               A private, focused workspace for tasks and calendars.
-            </Typography>
+            </p>
           </div>
         </div>
 
         <div className="flex flex-col items-center gap-3">
-          <Button size="lg" onPress={() => navigate({ to: '/login' })}>
+          <Button size="lg" onClick={() => navigate({ to: '/login' })}>
             Sign in
           </Button>
         </div>

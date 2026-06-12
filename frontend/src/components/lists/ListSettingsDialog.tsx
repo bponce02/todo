@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react'
-import {
-  Button,
-  Input,
-  Label,
-  Modal,
-  Separator,
-  Spinner,
-  TextField,
-  Typography,
-  toast,
-} from '@heroui/react'
 import { Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Separator } from '@/components/ui/separator'
+import { Spinner } from '@/components/ui/spinner'
 import { useDeleteList, useRenameList } from '../../lib/queries'
 import type { List } from '../../lib/tasks-api'
 import { ConfirmDialog } from '../common/ConfirmDialog'
@@ -45,7 +48,9 @@ export function ListSettingsDialog({
       toast.success('List renamed')
       onOpenChange(false)
     } catch (err) {
-      toast.danger(err instanceof Error ? err.message : 'Could not rename the list.')
+      toast.error(
+        err instanceof Error ? err.message : 'Could not rename the list.',
+      )
     }
   }
 
@@ -57,69 +62,67 @@ export function ListSettingsDialog({
       setConfirmOpen(false)
       onDeleted()
     } catch (err) {
-      toast.danger(err instanceof Error ? err.message : 'Could not delete the list.')
+      toast.error(
+        err instanceof Error ? err.message : 'Could not delete the list.',
+      )
     }
   }
 
   return (
     <>
-      <Modal>
-        <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
-          <Modal.Container>
-            <Modal.Dialog className="sm:max-w-[420px]">
-              <Modal.CloseTrigger />
-              <Modal.Header>
-                <Modal.Heading>List settings</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body>
-                <div className="flex flex-col gap-5">
-                  <div className="flex flex-col gap-2">
-                    <TextField value={title} onChange={setTitle}>
-                      <Label>Name</Label>
-                      <Input placeholder="List name" />
-                    </TextField>
-                    <div className="flex justify-end">
-                      <Button
-                        size="sm"
-                        isDisabled={!canRename}
-                        isPending={rename.isPending}
-                        onPress={handleRename}
-                      >
-                        {({ isPending }) => (
-                          <>
-                            {isPending ? <Spinner color="current" size="sm" /> : null}
-                            Rename
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex flex-col">
-                      <Typography weight="medium">Delete list</Typography>
-                      <Typography type="body-sm" color="muted">
-                        Removes the list and all of its tasks.
-                      </Typography>
-                    </div>
-                    <Button variant="danger" onPress={() => setConfirmOpen(true)}>
-                      <Trash2 />
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button slot="close" variant="secondary">
-                  Close
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>List settings</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="list-settings-name">Name</Label>
+                <Input
+                  id="list-settings-name"
+                  placeholder="List name"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  disabled={!canRename || rename.isPending}
+                  onClick={handleRename}
+                >
+                  {rename.isPending ? <Spinner /> : null}
+                  Rename
                 </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-col">
+                <span className="font-medium">Delete list</span>
+                <p className="text-sm text-muted-foreground">
+                  Removes the list and all of its tasks.
+                </p>
+              </div>
+              <Button
+                variant="destructive"
+                onClick={() => setConfirmOpen(true)}
+              >
+                <Trash2 />
+                Delete
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="secondary">Close</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         isOpen={confirmOpen}

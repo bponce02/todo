@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { Button, Typography } from '@heroui/react'
+import { Button } from '@/components/ui/button'
 import { ChevronLeft } from 'lucide-react'
 import { useLists } from '../../lib/queries'
 import { TasksView } from '../../components/tasks/TasksView'
@@ -19,15 +19,14 @@ function ListDetailPage() {
     <div className="flex flex-col gap-1 py-2">
       <div className="flex items-center gap-2">
         <Button
-          isIconOnly
-          size="sm"
+          size="icon-sm"
           variant="ghost"
           aria-label="Back to lists"
-          onPress={() => navigate({ to: '/lists' })}
+          onClick={() => navigate({ to: '/lists' })}
         >
           <ChevronLeft />
         </Button>
-        <Typography type="h2">{list?.title ?? 'List'}</Typography>
+        <h2 className="text-2xl font-semibold">{list?.title ?? 'List'}</h2>
       </div>
       <TasksView listId={id} />
     </div>

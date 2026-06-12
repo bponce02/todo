@@ -1,27 +1,31 @@
 import { useMemo, useState } from 'react'
 import confetti from 'canvas-confetti'
+import { toast } from 'sonner'
 import {
-  Alert,
-  Button,
-  Label,
-  ListBox,
-  SearchField,
-  Select,
-  Separator,
-  Spinner,
-  Typography,
-  toast,
-} from '@heroui/react'
-import {
+  AlertCircle,
   CheckCheck,
   CheckCircle2,
   Copy,
   Filter,
   List as ListIcon,
   ListChecks,
+  Search,
   Trash2,
   X,
 } from 'lucide-react'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+import { Spinner } from '@/components/ui/spinner'
 import {
   useBulkDeleteTasks,
   useBulkDuplicateTasks,
@@ -43,37 +47,24 @@ type StatusFilter = 'all' | 'active' | 'completed'
 // stay in sync.
 function StatusOptions() {
   return (
-    <ListBox>
-      <ListBox.Item id="all" textValue="All">
-        All
-        <ListBox.ItemIndicator />
-      </ListBox.Item>
-      <ListBox.Item id="active" textValue="Active">
-        Active
-        <ListBox.ItemIndicator />
-      </ListBox.Item>
-      <ListBox.Item id="completed" textValue="Completed">
-        Completed
-        <ListBox.ItemIndicator />
-      </ListBox.Item>
-    </ListBox>
+    <>
+      <SelectItem value="all">All</SelectItem>
+      <SelectItem value="active">Active</SelectItem>
+      <SelectItem value="completed">Completed</SelectItem>
+    </>
   )
 }
 
 function ListOptions({ lists }: { lists: Array<List> }) {
   return (
-    <ListBox>
-      <ListBox.Item id="all" textValue="All lists">
-        All lists
-        <ListBox.ItemIndicator />
-      </ListBox.Item>
+    <>
+      <SelectItem value="all">All lists</SelectItem>
       {lists.map((list) => (
-        <ListBox.Item key={list.id} id={String(list.id)} textValue={list.title}>
+        <SelectItem key={list.id} value={String(list.id)}>
           {list.title}
-          <ListBox.ItemIndicator />
-        </ListBox.Item>
+        </SelectItem>
       ))}
-    </ListBox>
+    </>
   )
 }
 
@@ -120,7 +111,8 @@ export function TasksView({ listId }: { listId?: number }) {
     return tasks.filter((t) => {
       if (status === 'active' && t.completed) return false
       if (status === 'completed' && !t.completed) return false
-      if (!listId && listFilter !== 'all' && t.list_id !== Number(listFilter)) return false
+      if (!listId && listFilter !== 'all' && t.list_id !== Number(listFilter))
+        return false
       if (q) {
         const hay = `${t.title} ${t.description ?? ''}`.toLowerCase()
         if (!hay.includes(q)) return false
@@ -147,9 +139,14 @@ export function TasksView({ listId }: { listId?: number }) {
     if (!task.completed) fireConfetti()
     setTogglingId(task.id)
     try {
-      await updateTask.mutateAsync({ id: task.id, patch: { completed: !task.completed } })
+      await updateTask.mutateAsync({
+        id: task.id,
+        patch: { completed: !task.completed },
+      })
     } catch (err) {
-      toast.danger(err instanceof Error ? err.message : 'Could not update the task.')
+      toast.error(
+        err instanceof Error ? err.message : 'Could not update the task.',
+      )
     } finally {
       setTogglingId(null)
     }
@@ -159,10 +156,14 @@ export function TasksView({ listId }: { listId?: number }) {
     const ids = [...selected]
     try {
       await bulkUpdate.mutateAsync({ ids, patch: { completed: true } })
-      toast.success(`Marked ${ids.length} task${ids.length === 1 ? '' : 's'} complete`)
+      toast.success(
+        `Marked ${ids.length} task${ids.length === 1 ? '' : 's'} complete`,
+      )
       exitSelectMode()
     } catch (err) {
-      toast.danger(err instanceof Error ? err.message : 'Could not update tasks.')
+      toast.error(
+        err instanceof Error ? err.message : 'Could not update tasks.',
+      )
     }
   }
 
@@ -170,10 +171,14 @@ export function TasksView({ listId }: { listId?: number }) {
     const sourceTasks = tasks.filter((t) => selected.has(t.id))
     try {
       await bulkDuplicate.mutateAsync(sourceTasks)
-      toast.success(`Duplicated ${sourceTasks.length} task${sourceTasks.length === 1 ? '' : 's'}`)
+      toast.success(
+        `Duplicated ${sourceTasks.length} task${sourceTasks.length === 1 ? '' : 's'}`,
+      )
       exitSelectMode()
     } catch (err) {
-      toast.danger(err instanceof Error ? err.message : 'Could not duplicate tasks.')
+      toast.error(
+        err instanceof Error ? err.message : 'Could not duplicate tasks.',
+      )
     }
   }
 
@@ -185,7 +190,9 @@ export function TasksView({ listId }: { listId?: number }) {
       setBulkDeleteOpen(false)
       exitSelectMode()
     } catch (err) {
-      toast.danger(err instanceof Error ? err.message : 'Could not delete tasks.')
+      toast.error(
+        err instanceof Error ? err.message : 'Could not delete tasks.',
+      )
     }
   }
 
@@ -209,58 +216,70 @@ export function TasksView({ listId }: { listId?: number }) {
     <div className="flex flex-col gap-4 py-4">
       {/* Toolbar: full labeled controls on desktop, icon-only on mobile */}
       <div className="flex items-end gap-2 md:gap-3">
-        <SearchField
-          fullWidth
-          value={search}
-          onChange={setSearch}
-          aria-label="Search tasks"
-          className="min-w-0 flex-1"
-        >
-          <Label>Search</Label>
-          <SearchField.Group>
-            <SearchField.SearchIcon />
-            <SearchField.Input className="min-w-0" placeholder="Search title or description" />
-            <SearchField.ClearButton />
-          </SearchField.Group>
-        </SearchField>
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <Label htmlFor="task-search">Search</Label>
+          <div className="relative">
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="task-search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Search tasks"
+              placeholder="Search title or description"
+              className="min-w-0 pr-8 pl-8"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                aria-label="Clear search"
+                className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-4" />
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Desktop controls */}
         <div className="hidden shrink-0 items-end gap-3 md:flex">
-          <Select
-            value={status}
-            onChange={(key) => setStatus(key as StatusFilter)}
-            className="w-44"
-          >
-            <Label>Status</Label>
-            <Select.Trigger>
-              <Select.Value />
-              <Select.Indicator />
-            </Select.Trigger>
-            <Select.Popover>
-              <StatusOptions />
-            </Select.Popover>
-          </Select>
+          <div className="flex w-44 flex-col gap-2">
+            <Label htmlFor="status-filter">Status</Label>
+            <Select
+              value={status}
+              onValueChange={(key) => setStatus(key as StatusFilter)}
+            >
+              <SelectTrigger id="status-filter" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <StatusOptions />
+              </SelectContent>
+            </Select>
+          </div>
 
           {!listId && (
-            <Select
-              value={listFilter}
-              onChange={(key) => setListFilter(key as string)}
-              className="w-48"
-            >
-              <Label>List</Label>
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListOptions lists={lists} />
-              </Select.Popover>
-            </Select>
+            <div className="flex w-48 flex-col gap-2">
+              <Label htmlFor="list-filter">List</Label>
+              <Select
+                value={listFilter}
+                onValueChange={(key) => setListFilter(key)}
+              >
+                <SelectTrigger id="list-filter" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <ListOptions lists={lists} />
+                </SelectContent>
+              </Select>
+            </div>
           )}
 
           <Button
-            variant={selectMode ? 'primary' : 'secondary'}
-            onPress={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+            variant={selectMode ? 'default' : 'secondary'}
+            onClick={() =>
+              selectMode ? exitSelectMode() : setSelectMode(true)
+            }
           >
             <ListChecks />
             {selectMode ? 'Done' : 'Select'}
@@ -270,39 +289,43 @@ export function TasksView({ listId }: { listId?: number }) {
         {/* Mobile controls: icon-only, aligned with the search bar */}
         <div className="flex shrink-0 items-center gap-2 md:hidden">
           <Select
-            aria-label="Filter by status"
-            variant="secondary"
             value={status}
-            onChange={(key) => setStatus(key as StatusFilter)}
+            onValueChange={(key) => setStatus(key as StatusFilter)}
           >
-            <Select.Trigger className="flex size-10 items-center justify-center rounded-3xl p-0">
+            <SelectTrigger
+              aria-label="Filter by status"
+              className="size-10 justify-center rounded-full p-0 [&>svg:last-child]:hidden"
+            >
               <Filter className="size-5" />
-            </Select.Trigger>
-            <Select.Popover>
+            </SelectTrigger>
+            <SelectContent>
               <StatusOptions />
-            </Select.Popover>
+            </SelectContent>
           </Select>
 
           {!listId && (
             <Select
-              aria-label="Filter by list"
-              variant="secondary"
               value={listFilter}
-              onChange={(key) => setListFilter(key as string)}
+              onValueChange={(key) => setListFilter(key)}
             >
-              <Select.Trigger className="flex size-10 items-center justify-center rounded-3xl p-0">
+              <SelectTrigger
+                aria-label="Filter by list"
+                className="size-10 justify-center rounded-full p-0 [&>svg:last-child]:hidden"
+              >
                 <ListIcon className="size-5" />
-              </Select.Trigger>
-              <Select.Popover>
+              </SelectTrigger>
+              <SelectContent>
                 <ListOptions lists={lists} />
-              </Select.Popover>
+              </SelectContent>
             </Select>
           )}
 
           <Button
-            isIconOnly
-            variant={selectMode ? 'primary' : 'secondary'}
-            onPress={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+            size="icon"
+            variant={selectMode ? 'default' : 'secondary'}
+            onClick={() =>
+              selectMode ? exitSelectMode() : setSelectMode(true)
+            }
             aria-label={selectMode ? 'Done selecting' : 'Select tasks'}
           >
             <ListChecks />
@@ -313,39 +336,36 @@ export function TasksView({ listId }: { listId?: number }) {
       {/* Bulk action bar */}
       {selectMode && (
         <div className="flex flex-wrap items-center gap-3 rounded-xl border p-3">
-          <Typography weight="medium">{selected.size} selected</Typography>
+          <span className="font-medium">{selected.size} selected</span>
           <div className="flex flex-1 flex-wrap justify-end gap-2">
             <Button
               size="sm"
               variant="secondary"
-              isDisabled={selected.size === 0}
-              isPending={bulkUpdate.isPending}
-              onPress={handleBulkComplete}
+              disabled={selected.size === 0 || bulkUpdate.isPending}
+              onClick={handleBulkComplete}
             >
-              <CheckCheck />
+              {bulkUpdate.isPending ? <Spinner /> : <CheckCheck />}
               Mark complete
             </Button>
             <Button
               size="sm"
               variant="secondary"
-              isDisabled={selected.size === 0}
-              isPending={bulkDuplicate.isPending}
-              onPress={handleBulkDuplicate}
+              disabled={selected.size === 0 || bulkDuplicate.isPending}
+              onClick={handleBulkDuplicate}
             >
-              <Copy />
+              {bulkDuplicate.isPending ? <Spinner /> : <Copy />}
               Duplicate
             </Button>
             <Button
               size="sm"
-              variant="danger"
-              isDisabled={selected.size === 0}
-              isPending={bulkDelete.isPending}
-              onPress={() => setBulkDeleteOpen(true)}
+              variant="destructive"
+              disabled={selected.size === 0 || bulkDelete.isPending}
+              onClick={() => setBulkDeleteOpen(true)}
             >
-              <Trash2 />
+              {bulkDelete.isPending ? <Spinner /> : <Trash2 />}
               Delete
             </Button>
-            <Button size="sm" variant="tertiary" onPress={exitSelectMode}>
+            <Button size="sm" variant="ghost" onClick={exitSelectMode}>
               <X />
               Cancel
             </Button>
@@ -356,65 +376,76 @@ export function TasksView({ listId }: { listId?: number }) {
       {/* Content */}
       {tasksQuery.isLoading ? (
         <div className="flex justify-center py-12">
-          <Spinner />
+          <Spinner className="size-6" />
         </div>
       ) : tasksQuery.isError ? (
-        <Alert status="danger">
-          <Alert.Indicator />
-          <Alert.Content>
-            <Alert.Title>Could not load tasks</Alert.Title>
-            <Alert.Description>
-              {tasksQuery.error instanceof Error ? tasksQuery.error.message : 'Please try again.'}
-            </Alert.Description>
-          </Alert.Content>
-          <Button size="sm" variant="secondary" onPress={() => tasksQuery.refetch()}>
-            Retry
-          </Button>
+        <Alert variant="destructive">
+          <AlertCircle />
+          <AlertTitle>Could not load tasks</AlertTitle>
+          <AlertDescription>
+            {tasksQuery.error instanceof Error
+              ? tasksQuery.error.message
+              : 'Please try again.'}
+            <Button
+              size="sm"
+              variant="secondary"
+              className="mt-2"
+              onClick={() => tasksQuery.refetch()}
+            >
+              Retry
+            </Button>
+          </AlertDescription>
         </Alert>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center gap-1 py-12">
-          <Typography color="muted">
-            {tasks.length === 0 ? 'No tasks yet.' : 'No tasks match your filters.'}
-          </Typography>
+          <p className="text-muted-foreground">
+            {tasks.length === 0
+              ? 'No tasks yet.'
+              : 'No tasks match your filters.'}
+          </p>
           {tasks.length === 0 && (
-            <Typography type="body-sm" color="muted">
+            <p className="text-sm text-muted-foreground">
               Tap the + button to create one.
-            </Typography>
+            </p>
           )}
         </div>
-      ) : (() => {
-        const active = filtered.filter((t) => !t.completed)
-        const completed = filtered.filter((t) => t.completed)
-        const renderCard = (task: Task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            listName={listById.get(task.list_id)?.title}
-            selectMode={selectMode}
-            isSelected={selected.has(task.id)}
-            isToggling={togglingId === task.id}
-            onToggleSelect={toggleSelect}
-            onToggleComplete={handleToggleComplete}
-            onOpen={openDetail}
-          />
-        )
-        return (
-          <div className="flex flex-col gap-3">
-            {active.map(renderCard)}
-            {active.length > 0 && completed.length > 0 && (
-              <div className="flex items-center gap-3 py-1">
-                <Separator className="flex-1" />
-                <div className="flex items-center gap-1.5 text-muted">
-                  <CheckCircle2 className="size-3.5" />
-                  <Typography type="body-sm" color="muted">Completed</Typography>
+      ) : (
+        (() => {
+          const active = filtered.filter((t) => !t.completed)
+          const completed = filtered.filter((t) => t.completed)
+          const renderCard = (task: Task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              listName={listById.get(task.list_id)?.title}
+              selectMode={selectMode}
+              isSelected={selected.has(task.id)}
+              isToggling={togglingId === task.id}
+              onToggleSelect={toggleSelect}
+              onToggleComplete={handleToggleComplete}
+              onOpen={openDetail}
+            />
+          )
+          return (
+            <div className="flex flex-col gap-3">
+              {active.map(renderCard)}
+              {active.length > 0 && completed.length > 0 && (
+                <div className="flex items-center gap-3 py-1">
+                  <Separator className="flex-1" />
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <CheckCircle2 className="size-3.5" />
+                    <span className="text-sm text-muted-foreground">
+                      Completed
+                    </span>
+                  </div>
+                  <Separator className="flex-1" />
                 </div>
-                <Separator className="flex-1" />
-              </div>
-            )}
-            {completed.map(renderCard)}
-          </div>
-        )
-      })()}
+              )}
+              {completed.map(renderCard)}
+            </div>
+          )
+        })()
+      )}
 
       <Fab label="New task" onPress={openCreate} />
 
@@ -428,7 +459,9 @@ export function TasksView({ listId }: { listId?: number }) {
 
       <TaskDetailDialog
         task={detailTask}
-        listName={detailTask ? listById.get(detailTask.list_id)?.title : undefined}
+        listName={
+          detailTask ? listById.get(detailTask.list_id)?.title : undefined
+        }
         isOpen={detailOpen}
         onOpenChange={setDetailOpen}
         onEdit={openEdit}

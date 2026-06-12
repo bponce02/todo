@@ -1,93 +1,103 @@
 @import 'tailwindcss';
-@import '@heroui/styles';
+@import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
-/*
- * HeroUI Theme Customization
- * Add this to your global.css after importing @heroui/styles
- * Only includes variables users need to customize
- * @see https://heroui.com/docs/react/getting-started/theming
- */
 
-:root,
-.light,
-.default,
-[data-theme='light'],
-[data-theme='default'] {
-  /* Theme Colors (Light Mode) */
-  --accent: oklch(56.67% 0.1329 241.36);
-  --accent-foreground: oklch(99.11% 0 0);
-  --background: oklch(97.02% 0.0119 241.36);
-  --border: oklch(90% 0.0119 241.36);
-  --danger: oklch(65.32% 0.2383 24.24);
-  --danger-foreground: oklch(99.11% 0 0);
-  --default: oklch(94% 0.0119 241.36);
-  --default-foreground: oklch(21.03% 0.0059 241.36);
-  --field-background: oklch(100% 0.006 241.36);
-  --field-border: transparent;
-  --field-foreground: oklch(21.03% 0.0119 241.36);
-  --field-placeholder: oklch(55.17% 0.0238 241.36);
-  --focus: oklch(56.67% 0.1329 241.36);
-  --foreground: oklch(21.03% 0.0119 241.36);
-  --muted: oklch(55.17% 0.0238 241.36);
-  --overlay: oklch(100% 0.0036 241.36);
-  --overlay-foreground: oklch(21.03% 0.0119 241.36);
-  --scrollbar: oklch(87.1% 0.0119 241.36);
-  --segment: oklch(100% 0.0119 241.36);
-  --segment-foreground: oklch(21.03% 0.0119 241.36);
-  --separator: oklch(92% 0.0119 241.36);
-  --success: oklch(73.29% 0.1981 149.31);
-  --success-foreground: oklch(21.03% 0.0059 149.31);
-  --surface: oklch(100% 0.006 241.36);
-  --surface-foreground: oklch(21.03% 0.0119 241.36);
-  --surface-secondary: oklch(95.24% 0.0095 241.36);
-  --surface-secondary-foreground: oklch(21.03% 0.0119 241.36);
-  --surface-tertiary: oklch(93.73% 0.0095 241.36);
-  --surface-tertiary-foreground: oklch(21.03% 0.0119 241.36);
-  --warning: oklch(78.19% 0.1623 70.83);
-  --warning-foreground: oklch(21.03% 0.0059 70.83);
+/* The theme toggle (settings.tsx) and the inline script in Django's
+ * src/templates/index.html set the `light`/`dark` class on <html>;
+ * shadcn keys dark mode off the `.dark` class. */
+@custom-variant dark (&:is(.dark *));
 
-  /* Border Radius */
-  --radius: 0.5rem;
-  --field-radius: 0.75rem;
-
-  /* Font Family */
-  /* Make sure to load Inter font in your app */
-  --font-sans: var(--font-inter);
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
 }
 
-.dark,
-[data-theme='dark'] {
-  color-scheme: dark;
-  /* Theme Colors (Dark Mode) */
-  --accent: oklch(56.67% 0.1329 241.36);
-  --accent-foreground: oklch(99.11% 0 0);
-  --background: oklch(12% 0.0119 241.36);
-  --border: oklch(28% 0.0119 241.36);
-  --danger: oklch(59.4% 0.2014 23.13);
-  --danger-foreground: oklch(99.11% 0 0);
-  --default: oklch(27.4% 0.0119 241.36);
-  --default-foreground: oklch(99.11% 0 0);
-  --field-background: oklch(21.03% 0.0238 241.36);
-  --field-border: transparent;
-  --field-foreground: oklch(99.11% 0.0119 241.36);
-  --field-placeholder: oklch(70.5% 0.0238 241.36);
-  --focus: oklch(56.67% 0.1329 241.36);
-  --foreground: oklch(99.11% 0.0119 241.36);
-  --muted: oklch(70.5% 0.0238 241.36);
-  --overlay: oklch(21.03% 0.0238 241.36);
-  --overlay-foreground: oklch(99.11% 0.0119 241.36);
-  --scrollbar: oklch(70.5% 0.0119 241.36);
-  --segment: oklch(39.64% 0.0119 241.36);
-  --segment-foreground: oklch(99.11% 0.0119 241.36);
-  --separator: oklch(25% 0.0119 241.36);
-  --success: oklch(73.29% 0.1981 149.31);
-  --success-foreground: oklch(21.03% 0.0059 149.31);
-  --surface: oklch(21.03% 0.0238 241.36);
-  --surface-foreground: oklch(99.11% 0.0119 241.36);
-  --surface-secondary: oklch(25.7% 0.0179 241.36);
-  --surface-secondary-foreground: oklch(99.11% 0.0119 241.36);
-  --surface-tertiary: oklch(27.21% 0.0179 241.36);
-  --surface-tertiary-foreground: oklch(99.11% 0.0119 241.36);
-  --warning: oklch(82.03% 0.1421 74.84);
-  --warning-foreground: oklch(21.03% 0.0059 74.84);
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.269 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.371 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }

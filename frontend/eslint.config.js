@@ -15,6 +15,8 @@ export default [
     },
   },
   {
-    ignores: ['eslint.config.js', 'prettier.config.js'],
+    // src/components/ui is vendored shadcn registry code -- not held to
+    // local lint rules.
+    ignores: ['eslint.config.js', 'prettier.config.js', 'src/components/ui/**'],
   },
 ]
